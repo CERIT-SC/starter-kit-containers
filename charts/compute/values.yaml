@@ -2,20 +2,21 @@ oidc:
   url: https://login.elixir-czech.org/oidc/.well-known/openid-configuration
   clientid: XXXX
   clientsecret: XXXX
-  audience: snake123
+  audience: ""
 
 compute: kubernetes
+logLevel: info
 
+# storageClass needs to support ReadWriteMany
 pvc:
- name: storage
+ name: ""
  existing: false
- storageClass: nfs-csi
+ storageClass: ""
  size: 2Gi
 
 htsget:
   disabled: false
   protocol: https
-  sendpublickey: true
 
 basicauth:
   user: XXX
@@ -25,7 +26,7 @@ rpcclient:
   user: XXX
   password: XXX
 
-image: krkoo/funnel:2024-06-12
+image: ghcr.io/mrtamm/funnel-gdi:latest
 
 funnel:
   resources:
@@ -37,14 +38,20 @@ funnel:
       cpu: 100m
       memory: 4Gi
       ephemeral-storage: 25Gi
-  serviceAccount: funnel-sa
-  runAsUser: 1000
+  runAsUser: 65534
   seccompProfile: true
+  # for debugging purposes
+  readinessProbeEnabled: true
 
 ingress:
   enabled: true
   className: nginx
-  annotations:
-    kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  annotations: {}
+    # kubernetes.io/tls-acme: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
   host: SOME_HOST
+  tlsEnabled: true # Set to false only for testing
+
+# if false, a ServiceAccount needs to be created with name .Release.Name-sa
+rbacEnabled: true
+createRole: true

@@ -3,12 +3,12 @@ Database: boltdb
 Compute: {{ .Values.compute }}
 
 Logger:
-  Level: debug
+  Level: {{ .Values.logLevel | quote }}
 
 HTSGETStorage:
   Disabled: {{ .Values.htsget.disabled }}
   Protocol: {{ .Values.htsget.protocol }}
-  SendPublicKey: {{ .Values.htsget.sendpublickey }}
+  Timeout: 360s
 
 RPCClient:
   MaxRetries: 3
@@ -24,11 +24,10 @@ Server:
   HostName: {{ .Release.Name }}
   RPCPort: 9090
 
-
 Kubernetes:
   # Change to "kubernetes" to use the kubernetes executor
   Executor: {{ .Values.compute }}
-  Namespace: {{ .Release.Namespace }} 
+  Namespace: {{ .Release.Namespace }}
   ExecutorTemplate: |
     apiVersion: batch/v1
     kind: Job
@@ -37,23 +36,25 @@ Kubernetes:
       namespace: {{ print "{{.Namespace}}" }}
       labels:
         job-name: {{ print "{{.TaskId}}-{{.JobId}}" }}
-    spec: 
+    spec:
       backoffLimit: 0
       completions: 1
       template:
         spec:
           restartPolicy: Never
           securityContext:
-            runAsUser: 1000
+            fsGroup: 65534
+            runAsUser: 65534
+            runAsGroup: 65534
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
-          containers: 
+          containers:
           - name: funnel-worker-{{ print "{{.TaskId}}" }}
             image: {{ print "{{.Image}}" }}
             imagePullPolicy: Always
             command: ["/bin/sh", "-c"]
-            args: {{.Command}}
+            args: {{ print "{{.Command}}" }}
             workingDir: {{ print "{{.Workdir}}" }}
             resources:
               requests:
@@ -68,18 +69,19 @@ Kubernetes:
               capabilities:
                 drop:
                   - ALL
+              privileged: false
             volumeMounts:
             - name: storage
               mountPath: /shared
               subPath: shared
             ### DO NOT CHANGE THIS
             {{ print "{{range $idx, $item := .Volumes}}" }}
-            - name: storage 
+            - name: storage
               mountPath: {{ print "{{$item.ContainerPath}}" }}
               subPath: {{ print "{{$.TaskId}}{{$item.ContainerPath}}" }}
             {{ print "{{end}}" }}
 
-          volumes: 
+          volumes:
           - name: storage
             persistentVolumeClaim:
               claimName: {{ .Values.pvc.name }}
