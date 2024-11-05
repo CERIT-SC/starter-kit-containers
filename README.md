@@ -36,7 +36,7 @@ cd ..
 docker compose up -d rems-app
 ```
 
-4. Login to the REMS application (`http://localhost:3000`), so your user gets created in the database
+4. Log in to the REMS application (`http://localhost:3000`), so your user gets created in the database
 5. Initialize the application
 
 ```bash
@@ -59,6 +59,7 @@ In `upload.sh` there is a simple script that uploads a dataset to SDA.
 
 - `sda-admin` and `sda-cli` in your `$PATH`
 - access token from `http://localhost:8085/`
+- C4GH public key generated (and printed on startup) in the `storage-and-interfaces/credentials` container
 - `s3cmd.conf` file in the same directory as the script. You can just replace `<access_token>` in this example:
 
 ```bash
@@ -81,19 +82,20 @@ socket_timeout = 30
 
 ### Usage
 
-1. Move all your data to a folder next to the script
-2. Run `./upload.sh <folder_name> <dataset_name>`
-3. After successful upload, you should be able to fetch the data using:
+1. Create a file named `crypt4gh_key.pub` and copy the key from the `storage-and-interfaces/credentials` container output log
+2. Move all your data to a folder next to the script
+3. Run `./upload.sh <folder_name> <dataset_name>`
+4. After successful upload, you should be able to fetch the data using:
 
 ```bash
 token=<access_token>
 curl -H "Authorization: Bearer $token" http://localhost:8443/s3/<dataset>/jd123_lifescience-ri.eu/<folder_name>/<file_name>
 ```
 
-## Running a worfklow from the compute-web
+## Running a workflow from the compute-web
 
 1. Log in to `http://localhost:4180`
 2. Select a workflow on the home page
 3. Define the input directory as `<dataset>/<user_id>` (e.g. `DATASET001/jd123_lifescience-ri.eu`)
-4. Define the output directory. This is the directory in the s3 inbox bucket (e.g. `myWorklowOutput`)
+4. Define the output directory. This is the directory in the s3 inbox bucket (e.g., `myWorklowOutput`)
 5. Click `Run`
