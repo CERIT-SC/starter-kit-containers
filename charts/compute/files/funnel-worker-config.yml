@@ -3,12 +3,15 @@ Database: boltdb
 Compute: {{ .Values.compute }}
 
 Logger:
-  Level: debug
+  Level: {{ .Values.logLevel | quote }}
 
 HTSGETStorage:
-  Disabled: {{ .Values.htsget.disabled }}
-  Protocol: {{ .Values.htsget.protocol }}
-  SendPublicKey: {{ .Values.htsget.sendpublickey }}
+  ServiceURL: {{ .Values.htsget.serviceURL | quote }}
+  Timeout: {{ .Values.htsget.timeout | quote }}
+
+SDAStorage:
+  ServiceURL: {{ .Values.sda.serviceURL | quote }}
+  Timeout: {{ .Values.sda.timeout | quote }}
 
 RPCClient:
   MaxRetries: 3
@@ -24,11 +27,21 @@ Server:
   HostName: {{ .Release.Name }}
   RPCPort: 9090
 
+AmazonS3:
+  Disabled: {{ .Values.awsS3.disabled }}
+  Key: {{ .Values.awsS3.key | quote }}
+  Secret: {{ .Values.awsS3.secret | quote }}
+
+GenericS3:
+  - Disabled: {{ .Values.genericS3.disabled }}
+    Endpoint: {{ .Values.genericS3.endpoint | quote }}
+    Key: {{ .Values.genericS3.key | quote }}
+    Secret: {{ .Values.genericS3.secret | quote }}
 
 Kubernetes:
   # Change to "kubernetes" to use the kubernetes executor
   Executor: {{ .Values.compute }}
-  Namespace: {{ .Release.Namespace }} 
+  Namespace: {{ .Release.Namespace }}
   ExecutorTemplate: |
     apiVersion: batch/v1
     kind: Job
@@ -37,23 +50,25 @@ Kubernetes:
       namespace: {{ print "{{.Namespace}}" }}
       labels:
         job-name: {{ print "{{.TaskId}}-{{.JobId}}" }}
-    spec: 
+    spec:
       backoffLimit: 0
       completions: 1
       template:
         spec:
           restartPolicy: Never
           securityContext:
-            runAsUser: 1000
+            fsGroup: {{ .Values.securityContext.worker.fsGroup}}
+            runAsUser: {{ .Values.securityContext.worker.runAsUser}}
+            runAsGroup: {{ .Values.securityContext.worker.runAsGroup}}
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
-          containers: 
+          containers:
           - name: funnel-worker-{{ print "{{.TaskId}}" }}
             image: {{ print "{{.Image}}" }}
             imagePullPolicy: Always
             command: ["/bin/sh", "-c"]
-            args: {{.Command}}
+            args: {{ print "{{.Command}}" }}
             workingDir: {{ print "{{.Workdir}}" }}
             resources:
               requests:
@@ -61,25 +76,27 @@ Kubernetes:
                 memory: {{ print "{{if ne .RamGb 0.0 -}}{{printf \"%.0fG\" .RamGb}}{{else}}{{\"16M\"}}{{end}}" }}
                 ephemeral-storage: {{ print "{{if ne .DiskGb 0.0 -}}{{printf \"%.0fG\" .DiskGb}}{{else}}{{\"100M\"}}{{end}}" }}
               limits:
-                cpu: 1000m
-                memory: 5G
+                cpu: {{ .Values.computeResourceLimits.worker.cpu | quote}}
+                memory: {{ .Values.computeResourceLimits.worker.memory | quote }}
+                ephemeral-storage: {{ .Values.computeResourceLimits.worker.ephemeralStorage | quote}}
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
                 drop:
                   - ALL
+              privileged: false
             volumeMounts:
             - name: storage
               mountPath: /shared
               subPath: shared
             ### DO NOT CHANGE THIS
             {{ print "{{range $idx, $item := .Volumes}}" }}
-            - name: storage 
+            - name: storage
               mountPath: {{ print "{{$item.ContainerPath}}" }}
               subPath: {{ print "{{$.TaskId}}{{$item.ContainerPath}}" }}
             {{ print "{{end}}" }}
 
-          volumes: 
+          volumes:
           - name: storage
             persistentVolumeClaim:
               claimName: {{ .Values.pvc.name }}

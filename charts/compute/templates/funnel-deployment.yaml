@@ -23,44 +23,51 @@ spec:
         app: {{ .Release.Name }}
     spec:
       containers:
-        - args:
-            - server
-            - run
-            - '--config'
-            - /etc/config/funnel-server-config.yml
+        - name: funnel
+          command: ["/app/funnel"]
+          args: ["server", "run", "--config", "/etc/config/funnel-server-config.yml"]
           image: {{ .Values.image }}
           imagePullPolicy: Always
-          name: funnel
           ports:
             - containerPort: 8000
               protocol: TCP
             - containerPort: 9090
               protocol: TCP
           resources:
-            {{- toYaml $.Values.resources | nindent 12 }}
+            {{- toYaml $.Values.funnel.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+            privileged: false
           volumeMounts:
             - mountPath: /opt/funnel/funnel-work-dir
               name: funnel-deployment-storage
             - mountPath: /etc/config
               name: config-volume
+  {{- if .Values.funnel.readinessProbeEnabled }}
+          readinessProbe:
+            httpGet:
+              path: /health.html
+              port: 8000
+            initialDelaySeconds: 1
+            periodSeconds: 5
+  {{- end }}
       securityContext:
+        fsGroup: 1000
         runAsNonRoot: true
         runAsUser: {{ .Values.funnel.runAsUser }}
 {{- if .Values.funnel.seccompProfile }}
         seccompProfile:
           type: RuntimeDefault
 {{- end }}
-      serviceAccount: {{ .Values.serviceAccount }}
+      serviceAccount: {{ .Release.Name }}-sa
       volumes:
         - name: funnel-deployment-storage
           persistentVolumeClaim:
             claimName: {{ .Values.pvc.name }}
-        - secret:
+        - name: config-volume
+          secret:
             defaultMode: 420
-            secretName: {{ .Release.Name }}-server-config 
-          name: config-volume
+            secretName: {{ .Release.Name }}-server-config

@@ -2,21 +2,38 @@ oidc:
   url: https://login.elixir-czech.org/oidc/.well-known/openid-configuration
   clientid: XXXX
   clientsecret: XXXX
-  audience: snake123
+  audience: ""
 
 compute: kubernetes
+logLevel: info
 
+# storageClass needs to support ReadWriteMany
 pvc:
- name: storage
+ name: ""
  existing: false
- storageClass: nfs-csi
+ storageClass: ""
  size: 2Gi
 
 htsget:
-  disabled: false
-  protocol: https
-  sendpublickey: true
+  serviceURL: http://htsget.local
+  timeout: 360s
 
+sda:
+  serviceURL: http://download.local
+  timeout: 360s
+
+# Enable and configure generic non-aws (ceph, minio etc) S3 storage
+genericS3:
+  disabled: true
+  endpoint: ""
+  key: ""
+  secret: ""
+
+# Enable and configure aws S3 storage
+awsS3:
+  disabled: true
+  key: ""
+  secret: ""
 basicauth:
   user: XXX
   password: XXX
@@ -25,7 +42,7 @@ rpcclient:
   user: XXX
   password: XXX
 
-image: krkoo/funnel:2024-06-12
+image: ghcr.io/mrtamm/funnel-gdi:latest
 
 funnel:
   resources:
@@ -35,16 +52,42 @@ funnel:
       ephemeral-storage: 25Gi
     requests:
       cpu: 100m
-      memory: 4Gi
+      memory: 2Gi
       ephemeral-storage: 25Gi
-  serviceAccount: funnel-sa
   runAsUser: 1000
   seccompProfile: true
+  # for debugging purposes
+  readinessProbeEnabled: true
+
+# limit resources for master/worker containers
+computeResourceLimits:
+  master:
+    cpu: 1
+    memory: 1G
+    ephemeralStorage: 10G
+  worker:
+    cpu: 8
+    memory: 8G
+    ephemeralStorage: 10G
+
+securityContext:
+  master:
+    fsGroup: 1000
+    runAsUser: 1000
+  worker:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsGroup: 1000
 
 ingress:
   enabled: true
   className: nginx
-  annotations:
-    kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  annotations: {}
+    # kubernetes.io/tls-acme: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
   host: SOME_HOST
+  tlsEnabled: true # Set to false only for testing
+
+# if false, a ServiceAccount needs to be created with name .Release.Name-sa
+rbacEnabled: true
+createRole: true

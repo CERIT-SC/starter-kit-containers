@@ -6,23 +6,28 @@ BoltDB:
 Compute: {{ .Values.compute }}
 
 Logger:
-  Level: debug
+  Level: {{ .Values.logLevel | quote }}
 
 HTSGETStorage:
-  Disabled: {{ .Values.htsget.disabled }}
-  Protocol: {{ .Values.htsget.protocol }}
-  SendPublicKey: {{ .Values.htsget.sendpublickey }}
+  ServiceURL: {{ .Values.htsget.serviceURL | quote }}
+  Timeout: {{ .Values.htsget.timeout | quote }}
+
+SDAStorage:
+  ServiceURL: {{ .Values.sda.serviceURL | quote }}
+  Timeout: {{ .Values.sda.timeout | quote }}
 
 Server:
   # Require Bearer JWT authentication for the server APIs.
   # Server won't launch when configuration URL cannot be loaded.
   OidcAuth:
     # URL of the OIDC service configuration:
-    ServiceConfigUrl: {{ .Values.oidc.url }}
-    # Client ID and secret are sent with the token introspection request 
+    ServiceConfigURL: {{ .Values.oidc.url }}
+    # Client ID and secret are sent with the token introspection request
     # (Basic authentication):
     ClientId: {{ .Values.oidc.clientid }}
     ClientSecret: {{ .Values.oidc.clientsecret }}
+    # This is irrelevant when only backend is deployed but needs be non-empty
+    RedirectURL: "http://localhost:8000/login"
     # Optional: if specified, this scope value must be in the token:
     # RequireScope:
     # Optional: if specified, this audience value must be in the token:
@@ -30,71 +35,83 @@ Server:
   BasicAuth:
     - User: {{ .Values.basicauth.user | quote }}
       Password: {{ .Values.basicauth.password | quote }}
-  
+      Admin: true
+
   HostName: 0.0.0.0
-  
+
 RPCClient:
   User: {{ .Values.basicauth.user | quote }}
   Password: {{ .Values.basicauth.password | quote }}
+
+AmazonS3:
+  Disabled: {{ .Values.awsS3.disabled }}
+  Key: {{ .Values.awsS3.key | quote }}
+  Secret: {{ .Values.awsS3.secret | quote }}
+
+GenericS3:
+  - Disabled: {{ .Values.genericS3.disabled }}
+    Endpoint: {{ .Values.genericS3.endpoint | quote }}
+    Key: {{ .Values.genericS3.key | quote }}
+    Secret: {{ .Values.genericS3.secret | quote }}
 
 Kubernetes:
   DisableJobCleanup: false
   DisableReconciler: false
   ReconcileRate: 5m
   Namespace: {{ .Release.Namespace }}
-  Template: | 
+  Template: |
     apiVersion: batch/v1
     kind: Job
     metadata:
       ## DO NOT CHANGE NAME
       name: {{ print "{{.TaskId}}" }}
       namespace: {{ print "{{.Namespace}}" }}
-    spec: 
+    spec:
       backoffLimit: 0
       completions: 1
       template:
+        metadata:
+            labels:
+              kubernetes.io/job.executor: "true"
         spec:
-          serviceAccountName: funnel-sa
+          serviceAccountName: {{ .Release.Name }}-sa
           restartPolicy: Never
           securityContext:
-            runAsUser: 1000
+            fsGroup: {{ .Values.securityContext.master.fsGroup}}
+            runAsUser: {{ .Values.securityContext.master.runAsUser}}
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
-          containers: 
+          containers:
             - name: funnel-worker-{{ print "{{.TaskId}}" }}
               image: {{ .Values.image }}
               imagePullPolicy: Always
-              args:
-                - "worker"
-                - "run"
-                - "--config"
-                - "/etc/config/funnel-worker-config.yml"
-                - "--taskID"
-                - {{ print "{{.TaskId}}" }}
+              command: ["/app/funnel"]
+              args: ["worker", "run", "--config", "/etc/config/funnel-worker-config.yml", "--taskID", {{ print "{{.TaskId}}" }}]
               resources:
                 requests:
                   cpu: {{ print "{{if ne .Cpus 0 -}}{{.Cpus}}{{ else }}{{\"100m\"}}{{end}}" }}
                   memory: {{ print "{{if ne .RamGb 0.0 -}}{{printf \"%.0fG\" .RamGb}}{{else}}{{\"16M\"}}{{end}}" }}
                   ephemeral-storage: {{ print "{{if ne .DiskGb 0.0 -}}{{printf \"%.0fG\" .DiskGb}}{{else}}{{\"100M\"}}{{end}}" }}
                 limits:
-                  cpu: 1000m
-                  memory: 1G
+                  cpu: {{ .Values.computeResourceLimits.master.cpu | quote }}
+                  memory: {{ .Values.computeResourceLimits.master.memory | quote }}
+                  ephemeral-storage: {{ .Values.computeResourceLimits.master.ephemeralStorage | quote }}
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop:
                     - ALL
+                privileged: false
               volumeMounts:
                 - name: funnel-storage-{{ print "{{.TaskId}}" }}
-                  mountPath: /opt/funnel/funnel-work-dir/{{ print "{{.TaskId}}" }}
-                  subPath: {{ print "{{.TaskId}}" }}
+                  mountPath: /opt/funnel/funnel-work-dir
                 - name: config-volume
                   mountPath: /etc/config
                 - name: keys
                   mountPath: /keys
-    
-          volumes: 
+
+          volumes:
             - name: config-volume
               secret:
                 secretName: {{ .Release.Name }}-worker-config
