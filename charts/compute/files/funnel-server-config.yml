@@ -11,14 +11,13 @@ Logger:
 HTSGETStorage:
   Disabled: {{ .Values.htsget.disabled }}
   Protocol: {{ .Values.htsget.protocol }}
-  SendPublicKey: {{ .Values.htsget.sendpublickey }}
 
 Server:
   # Require Bearer JWT authentication for the server APIs.
   # Server won't launch when configuration URL cannot be loaded.
   OidcAuth:
     # URL of the OIDC service configuration:
-    ServiceConfigUrl: {{ .Values.oidc.url }}
+    ServiceConfigURL: {{ .Values.oidc.url }}
     # Client ID and secret are sent with the token introspection request 
     # (Basic authentication):
     ClientId: {{ .Values.oidc.clientid }}
@@ -27,9 +26,11 @@ Server:
     # RequireScope:
     # Optional: if specified, this audience value must be in the token:
     RequireAudience: {{ .Values.oidc.audience | quote }}
+    RedirectURL: {{ .Values.oidc.redirectrul | quote }}
   BasicAuth:
     - User: {{ .Values.basicauth.user | quote }}
       Password: {{ .Values.basicauth.password | quote }}
+      Admin: true
   
   HostName: 0.0.0.0
   

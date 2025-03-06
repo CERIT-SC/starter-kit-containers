@@ -1,7 +1,8 @@
 oidc:
   url: https://login.elixir-czech.org/oidc/.well-known/openid-configuration
-  clientid: XXXX
-  clientsecret: XXXX
+  redirecturl: XXX
+  clientid: XXX
+  clientsecret: XXX
   audience: snake123
 
 compute: kubernetes
@@ -25,7 +26,7 @@ rpcclient:
   user: XXX
   password: XXX
 
-image: krkoo/funnel:2024-06-12
+image: cerit.io/krko_o/funnel:2025-03-06
 
 funnel:
   resources:

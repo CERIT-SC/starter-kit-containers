@@ -8,13 +8,12 @@ Logger:
 HTSGETStorage:
   Disabled: {{ .Values.htsget.disabled }}
   Protocol: {{ .Values.htsget.protocol }}
-  SendPublicKey: {{ .Values.htsget.sendpublickey }}
 
 RPCClient:
   MaxRetries: 3
   Timeout: 30s
-  User: {{ .Values.rpcclient.user | quote }}
-  Password: {{ .Values.rpcclient.password | quote }}
+  User: {{ .Values.basicauth.user | quote }}
+  Password: {{ .Values.basicauth.password | quote }}
 
 EventWriters:
   - rpc
@@ -53,8 +52,16 @@ Kubernetes:
             image: {{ print "{{.Image}}" }}
             imagePullPolicy: Always
             command: ["/bin/sh", "-c"]
-            args: {{.Command}}
+            args: 
+            - {{print "{{.Command}}" }}
             workingDir: {{ print "{{.Workdir}}" }}
+            {{`{{if len .Env}}`}}
+            env:
+            {{`{{range $key, $value := .Env}}`}}
+            - name: {{`{{$key}}`}}
+              value: {{`{{$value}}`}}
+            {{`{{end}}`}}
+            {{`{{end}}`}}
             resources:
               requests:
                 cpu: {{ print "{{if ne .Cpus 0 -}}{{.Cpus}}{{ else }}{{\"100m\"}}{{end}}" }}

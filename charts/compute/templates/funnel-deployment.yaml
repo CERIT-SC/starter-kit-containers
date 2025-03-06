@@ -37,7 +37,7 @@ spec:
             - containerPort: 9090
               protocol: TCP
           resources:
-            {{- toYaml $.Values.resources | nindent 12 }}
+            {{- toYaml $.Values.funnel.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -55,7 +55,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 {{- end }}
-      serviceAccount: {{ .Values.serviceAccount }}
+      serviceAccount: {{ .Values.funnel.serviceAccount }}
       volumes:
         - name: funnel-deployment-storage
           persistentVolumeClaim:
