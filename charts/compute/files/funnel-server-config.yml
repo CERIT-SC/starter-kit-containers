@@ -26,7 +26,7 @@ Server:
     # RequireScope:
     # Optional: if specified, this audience value must be in the token:
     RequireAudience: {{ .Values.oidc.audience | quote }}
-    RedirectURL: {{ .Values.oidc.redirectrul | quote }}
+    RedirectURL: {{ .Values.oidc.redirecturl | quote }}
   BasicAuth:
     - User: {{ .Values.basicauth.user | quote }}
       Password: {{ .Values.basicauth.password | quote }}
