@@ -1,0 +1,11 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "beacon.fullname" . }}-pvc-ri-tools
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.riTools.pvc.size }}
+  storageClassName: {{ .Values.riTools.pvc.storageClass }}

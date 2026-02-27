@@ -1,0 +1,59 @@
+{{- if .Values.riTools.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "beacon.fullname" . }}-ri-tools
+  labels:
+    {{- include "beacon.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "beacon.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "beacon.labels" . | nindent 8 }}
+        app: ri-tools
+    spec:
+      automountServiceAccountToken: false
+      securityContext:  
+        {{- omit .Values.riTools.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      containers:
+      - name: beacon
+        image: {{ .Values.riTools.image }}
+        imagePullPolicy: Always
+        resources: 
+          {{- toYaml .Values.riTools.resources | nindent 10 }}
+        securityContext: 
+          {{- omit .Values.riTools.containerSecurityContext "enabled" | toYaml | nindent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /usr/src/app/output_docs
+          subPath: output_docs
+        - name: data
+          mountPath: /usr/src/app/conf
+          subPath: conf
+        - name: data
+          mountPath: /usr/src/app/files/vcf/files_to_read
+          subPath: files_to_read
+        - name: data
+          mountPath: /usr/src/app/csv
+          subPath: csv
+        - name: data
+          mountPath: /usr/src/app/pipelines
+          subPath: pipelines
+        - name: data
+          mountPath: /usr/src/app/files/updated_json
+          subPath: updated_json
+        {{- with .Values.riTools.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "beacon.fullname" . }}-pvc-ri-tools
+      {{- with .Values.riTools.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

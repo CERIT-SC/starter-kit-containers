@@ -1,0 +1,10 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "beacon.fullname" . }}
+data:
+  datasets_conf.yaml: |
+{{ .Values.beacon.datasets.datasetsConfig | indent 4 }}
+
+  datasets_permissions.yaml: |
+{{ .Values.beacon.datasets.datasetsPermissions | indent 4 }}

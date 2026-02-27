@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "beacon.fullname" . }}-mongo
+  labels:
+    {{- include "beacon.labels" . | nindent 4 }}
+    app: mongo
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+      name: mongo
+  selector:
+    {{- include "beacon.selectorLabels" . | nindent 4 }}
+    app: mongo

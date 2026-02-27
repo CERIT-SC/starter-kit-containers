@@ -1,0 +1,8 @@
+apiVersion: v2
+name: gdi-beacon
+version: "0.1.0"
+appVersion: "v2.2.0"
+description: gdi-beacon
+maintainers:
+- name: CERIT-SC
+  email: root@cerit-sc.cz

@@ -1,0 +1,6 @@
+.mypy_cache
+data
+files
+k8s
+.vscode
+.git

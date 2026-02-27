@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "beacon.fullname" . }}
+  labels:
+    {{- include "beacon.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "beacon.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "beacon.labels" . | nindent 8 }}
+        app: beacon
+    spec:
+      automountServiceAccountToken: false
+      securityContext:  
+        {{- omit .Values.beacon.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      containers:
+      - name: beacon
+        image: {{ .Values.beacon.image }}
+        imagePullPolicy: Always
+        command: ['python', '-m', 'beacon']
+        ports:
+        - containerPort: 5050
+        env:
+          - name: database_host
+            value: {{ include "beacon.fullname" . }}-mongo
+          - name: database_port
+            value: "27017"
+          - name: database_user
+            value: {{ .Values.mongodb.bootstrap.username }}  
+          - name: database_password
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "beacon.fullname" . }}-mongo
+                key: password
+          - name: database_name
+            value: {{ .Values.mongodb.bootstrap.db }}
+          - name: database_auth_source
+            value: "admin"
+        {{- if .Values.beacon.resources }}
+        resources: 
+          {{- toYaml .Values.beacon.resources | nindent 10 }}
+        {{- end }}
+        securityContext: 
+          {{- omit .Values.beacon.containerSecurityContext "enabled" | toYaml | nindent 10 }}
+        volumeMounts:
+        - name: secret
+          mountPath: /beacon/conf/conf.py
+          subPath: conf.py
+        - name: config
+          mountPath: /beacon/permissions/datasets/datasets_permissions.yml
+          subPath: datasets_permissions.yaml
+        - name: config
+          mountPath: /beacon/conf/datasets/datasets_conf.yml
+          subPath: datasets_conf.yaml
+      volumes:
+      - name: secret
+        secret:
+          secretName: {{ include "beacon.fullname" . }}
+      - name: config
+        configMap:
+          name: {{ include "beacon.fullname" . }}

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "beacon.fullname" . }}
+  annotations:
+    {{- toYaml $.Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+   - hosts:
+       - {{ .Values.ingress.host }}
+     secretName: {{ .Values.ingress.host | replace "." "-" }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+        - pathType: Prefix
+          path: "/"
+          backend:
+            service:
+              name: {{ include "beacon.fullname" . }}-api
+              port:
+                number: 5050

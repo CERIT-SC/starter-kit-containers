@@ -1,0 +1,163 @@
+nameOverride: ""
+fullnameOverride: ""
+
+mongodb:
+  imageTag: latest
+  bootstrap:
+    db: beacon
+    username: root
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsNonRoot: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  pvc:
+    storageClass: ""
+    size: 10Gi
+    existingClaim: ""
+
+beacon:
+  image: cerit.io/cerit/beacon-pi-aggregated:2026-01-12
+  #image: cerit.io/cerit/beacon-pi-sensitive:2026-01-12
+  config:
+    # Beacon identification
+    beaconId: "com.example.beacon"
+    beaconName: "Example Beacon node"
+    apiVersion: "v2.2.0"
+    environment: "test"
+    description: "Example Beacon node"
+
+    # URLs
+    uri: "https://beacon.example.com"
+    uriSubpath: "/api"
+    welcomeUrl: "https://beacon.example.com"
+    alternativeUrl: "https://beacon.example.com/api"
+    documentationUrl: "https://b2ri-documentation-demo.ega-archive.org/"
+
+    # Timestamps
+    createDatetime: ""
+    updateDatetime: ""
+
+    # Security and access
+    defaultBeaconGranularity: "record"  # boolean, count or record
+    securityLevels:
+      - PUBLIC
+      - REGISTERED
+      - CONTROLLED
+    corsUrls:
+      - "http://localhost:3003"
+      - "http://localhost:3000"
+
+    # Service Info
+    ga4ghServiceTypeGroup: "org.ga4gh"
+    ga4ghServiceTypeArtifact: "beacon"
+    ga4ghServiceTypeVersion: "1.0"
+
+    # Organization info
+    orgId: "my-organization"
+    orgName: "My Organization Name"
+    orgDescription: "My organization description"
+    orgAddress: "My organization address"
+    orgWelcomeUrl: "https://www.example.com/"
+    orgContactUrl: "mailto:support@example.com"
+    orgLogoUrl: "https://www.example.com/logo.svg"
+    orgInfo: ""
+
+    # Query Budget
+    queryBudgetPerUser: false
+    queryBudgetPerIp: false
+    queryBudgetAmount: 3
+    queryBudgetTimeInSeconds: 20
+    queryBudgetDatabase: "mongo"
+    queryBudgetDbName: "beacon"
+    queryBudgetTable: "budget"
+
+    # Query Rounding
+    impreciseCount: 0  # If 0, no modification. If >0, count will be this number when count is smaller.
+    roundToTens: false  # If true, rounding to immediate superior tenth when impreciseCount is 0
+    roundToHundreds: false  # If true, rounding to immediate superior hundredth when impreciseCount is 0 and roundToTens is false
+
+    # Logging
+    logLevel: "INFO"  # NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
+    logFile: null
+
+    # Certificates
+    beaconServerCrt: ""
+    beaconServerKey: ""
+
+  datasets:
+    datasetsConfig: ""
+    datasetsPermissions: ""
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 2000
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+  podSecurityContext:
+    enabled: true
+    fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: "RuntimeDefault"
+
+riTools:
+  enabled: false
+  image: cerit.io/krko_o/beacon2-ri-tools-v2:2026-02-16
+  pvc:
+    storageClass: ""
+    size: 10Gi
+  extraVolumes: []
+  extraVolumeMounts: []
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 2000
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+  podSecurityContext:
+    enabled: true
+    fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  resources:
+    limits:
+      cpu: 4
+      memory: 16Gi
+    requests:
+      cpu: 2
+      memory: 8Gi
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  host: ""

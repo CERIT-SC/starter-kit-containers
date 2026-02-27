@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "beacon.fullname" . }}-mongo
+spec:
+  replicas: 1
+  serviceName: {{ include "beacon.fullname" . }}-mongo
+  selector:
+    matchLabels:
+      {{- include "beacon.selectorLabels" . | nindent 6 }}
+      app: mongo
+  template:
+    metadata:
+      labels:
+        {{- include "beacon.labels" . | nindent 8 }}
+        app: mongo
+    spec:
+      automountServiceAccountToken: false
+      securityContext:  {{- omit .Values.mongodb.podSecurityContext "enabled" | toYaml | nindent 9 }}
+      containers:
+        - name: mongo
+          image: bitnami/mongodb:{{ .Values.mongodb.imageTag }} 
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: BITNAMI_DEBUG
+            value: 'true'
+          - name: MONGODB_EXTRA_DATABASES
+            value: {{ .Values.mongodb.bootstrap.db }}
+          - name: MONGODB_ROOT_USER
+            value: {{ .Values.mongodb.bootstrap.username }}
+          - name: MONGODB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "beacon.fullname" . }}-mongo
+                key: password
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          {{- if .Values.mongodb.resources }}
+          resources: {{- toYaml .Values.mongodb.resources | nindent 12 }}
+          {{- end }}
+          securityContext: {{- omit .Values.mongodb.containerSecurityContext "enabled" | toYaml | nindent 13 }}
+          volumeMounts:
+          - mountPath: /bitnami/mongodb
+            name: datadir
+      volumes:
+      - name: datadir
+        persistentVolumeClaim:
+          {{- if ne .Values.mongodb.pvc.existingClaim "" }}
+          claimName: {{ .Values.mongodb.pvc.existingClaim }}
+          {{- else }}
+          claimName: {{ include "beacon.fullname" . }}-pvc-mongo
+          {{- end }}
