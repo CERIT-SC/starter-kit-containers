@@ -1,0 +1,19 @@
+{{- if .Values.server.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fdp.fullname" . }}-data
+  labels:
+    {{- include "fdp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- range .Values.server.persistence.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.server.persistence.size | quote }}
+  {{- if .Values.server.persistence.storageClassName }}
+  storageClassName: {{ .Values.server.persistence.storageClassName | quote }}
+  {{- end }}
+{{- end }}

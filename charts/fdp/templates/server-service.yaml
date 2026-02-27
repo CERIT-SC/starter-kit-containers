@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fdp # Hardcoded to client image
+  labels:
+    {{- include "fdp.labels" . | nindent 4 }}
+    app: fdp-server
+spec:
+  type: {{ .Values.server.service.type }}
+  ports:
+    - port: {{ .Values.server.service.port }}
+      targetPort: {{ .Values.server.service.port }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "fdp.selectorLabels" . | nindent 4 }}
+    app: fdp-server

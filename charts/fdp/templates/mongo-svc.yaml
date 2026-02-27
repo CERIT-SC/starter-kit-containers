@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fdp.fullname" . }}-mongo
+  labels:
+    {{- include "fdp.labels" . | nindent 4 }}
+    app: mongo
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+      name: mongo
+  selector:
+    {{- include "fdp.selectorLabels" . | nindent 4 }}
+    app: mongo

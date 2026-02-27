@@ -1,0 +1,13 @@
+{{- if eq .Values.mongodb.pvc.existingClaim "" }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "fdp.fullname" . }}-pvc-mongo
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.mongodb.pvc.size }}
+  storageClassName: {{ .Values.mongodb.pvc.storageClass }}
+{{- end }}

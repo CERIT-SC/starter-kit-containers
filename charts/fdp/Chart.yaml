@@ -1,0 +1,11 @@
+apiVersion: v2
+name: fdp
+description: A Helm chart for FDP application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+# dependencies:
+#   - name: mongodb
+#     version: 16.5.40
+#     repository: https://charts.bitnami.com/bitnami

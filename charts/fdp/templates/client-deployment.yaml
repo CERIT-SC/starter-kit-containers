@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fdp.fullname" . }}-client
+  labels:
+    {{- include "fdp.labels" . | nindent 4 }}
+    app: fdp-client
+spec:
+  selector:
+    matchLabels:
+      {{- include "fdp.selectorLabels" . | nindent 6 }}
+      app: fdp-client
+  template:
+    metadata:
+      labels:
+        {{- include "fdp.selectorLabels" . | nindent 8 }}
+        app: fdp-client
+    spec:
+      {{- with .Values.client.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: fdp-frontend
+          image: "{{ .Values.client.image.repository }}:{{ .Values.client.image.tag }}"
+          imagePullPolicy: {{ .Values.client.image.pullPolicy }}
+          {{- with .Values.client.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: frontend
+              containerPort: 80
+          {{- with .Values.client.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.client.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
