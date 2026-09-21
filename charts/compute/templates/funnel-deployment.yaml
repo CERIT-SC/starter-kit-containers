@@ -55,6 +55,10 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 {{- end }}
+{{- if .Values.funnel.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.funnel.imagePullSecret }}
+{{- end }}
       serviceAccount: {{ .Values.funnel.serviceAccount }}
       volumes:
         - name: funnel-deployment-storage

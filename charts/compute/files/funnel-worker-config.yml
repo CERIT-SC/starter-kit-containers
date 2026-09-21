@@ -6,8 +6,8 @@ Logger:
   Level: debug
 
 HTSGETStorage:
-  Disabled: {{ .Values.htsget.disabled }}
-  Protocol: {{ .Values.htsget.protocol }}
+  ServiceURL: {{ .Values.htsget.serviceUrl | quote }}
+  Timeout: {{ .Values.htsget.timeout }}
 
 RPCClient:
   MaxRetries: 3

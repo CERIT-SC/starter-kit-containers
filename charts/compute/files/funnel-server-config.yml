@@ -9,16 +9,17 @@ Logger:
   Level: debug
 
 HTSGETStorage:
-  Disabled: {{ .Values.htsget.disabled }}
-  Protocol: {{ .Values.htsget.protocol }}
+  ServiceURL: {{ .Values.htsget.serviceUrl | quote }}
+  Timeout: {{ .Values.htsget.timeout }}
 
 Server:
+{{- if .Values.oidc.enabled }}
   # Require Bearer JWT authentication for the server APIs.
   # Server won't launch when configuration URL cannot be loaded.
   OidcAuth:
     # URL of the OIDC service configuration:
     ServiceConfigURL: {{ .Values.oidc.url }}
-    # Client ID and secret are sent with the token introspection request 
+    # Client ID and secret are sent with the token introspection request
     # (Basic authentication):
     ClientId: {{ .Values.oidc.clientid }}
     ClientSecret: {{ .Values.oidc.clientsecret }}
@@ -27,6 +28,7 @@ Server:
     # Optional: if specified, this audience value must be in the token:
     RequireAudience: {{ .Values.oidc.audience | quote }}
     RedirectURL: {{ .Values.oidc.redirecturl | quote }}
+{{- end }}
   BasicAuth:
     - User: {{ .Values.basicauth.user | quote }}
       Password: {{ .Values.basicauth.password | quote }}
@@ -56,13 +58,17 @@ Kubernetes:
       template:
         spec:
           serviceAccountName: funnel-sa
+{{- if .Values.funnel.imagePullSecret }}
+          imagePullSecrets:
+            - name: {{ .Values.funnel.imagePullSecret }}
+{{- end }}
           restartPolicy: Never
           securityContext:
             runAsUser: 1000
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
-          containers: 
+          containers:
             - name: funnel-worker-{{ print "{{.TaskId}}" }}
               image: {{ .Values.image }}
               imagePullPolicy: Always
