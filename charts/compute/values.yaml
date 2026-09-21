@@ -1,9 +1,10 @@
 oidc:
-  url: https://login.elixir-czech.org/oidc/.well-known/openid-configuration
+  enabled: false
+  url: XXX
   redirecturl: XXX
   clientid: XXX
   clientsecret: XXX
-  audience: snake123
+  audience: XXX
 
 compute: kubernetes
 
@@ -14,9 +15,9 @@ pvc:
  size: 2Gi
 
 htsget:
-  disabled: false
-  protocol: https
-  sendpublickey: true
+  # Leave empty to disable HTSGET storage entirely.
+  serviceUrl: ""
+  timeout: 30s
 
 basicauth:
   user: XXX
@@ -26,7 +27,7 @@ rpcclient:
   user: XXX
   password: XXX
 
-image: cerit.io/krko_o/funnel:2025-03-06
+image: XXX
 
 funnel:
   resources:
@@ -41,6 +42,7 @@ funnel:
   serviceAccount: funnel-sa
   runAsUser: 1000
   seccompProfile: true
+  imagePullSecret: ""
 
 ingress:
   enabled: true
@@ -48,4 +50,4 @@ ingress:
   annotations:
     kubernetes.io/tls-acme: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  host: SOME_HOST
+  host: XXX
