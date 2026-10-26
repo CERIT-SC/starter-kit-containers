@@ -82,7 +82,7 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq
 
   compute-mongo:
-    image: bitnami/mongodb:latest
+    image: soldevelo/mongodb:latest
     ports:
       - 27017:27017
     environment:
